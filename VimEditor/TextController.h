@@ -16,16 +16,24 @@ private:
 	std::fstream outputStream;
 	int charCount;
 	int lineCount;
+	int atLine;
+	bool saved;
 	Buffer* head;
 	Buffer* tail;
+	Buffer* at;
 
 public:
 	TextController(const char inputFile[], const char outputFile[]);
 	~TextController();
-	void append(char data[]);
+
+	bool isSaved();
+	int getLineNum();
+	char* getLine();
+
 	void insert(int line, char data[]);
 	void jump(int line);
 	void remove(int line);
 	void print();
+	void save();
+	void quit();
 };
-
