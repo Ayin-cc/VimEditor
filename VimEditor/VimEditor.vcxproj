@@ -127,11 +127,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Help.h" />
     <ClInclude Include="Interactor.h" />
     <ClInclude Include="TextController.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Interactor.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="TextController.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
