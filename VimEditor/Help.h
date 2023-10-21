@@ -1,3 +1,4 @@
+static const char* UNKNOW = "未知指令! 请输入-h获取更多帮助!";
 static const char* HELP[] = {
 	"\t-v\t\t无参数\t\t显示当前内容",
 	"\t-begin\t\t无参数\t\t到第一行",
