@@ -12,6 +12,7 @@ struct Buffer {
 class TextController {
 private:
 	const char* originText;
+	const char* filepath;
 	std::ifstream inputStream;
 	std::fstream outputStream;
 	int charCount;
@@ -34,6 +35,7 @@ public:
 	void jump(int line);
 	void remove(int line);
 	void print();
+	void reload();
 	void save();
 	void quit();
 };

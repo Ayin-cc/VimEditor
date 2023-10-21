@@ -2,6 +2,7 @@
 
 TextController::TextController(const char inputFile[], const char outputFile[]) {
     // 打开文件
+    this->filepath = inputFile;
     inputStream.open(inputFile);
     outputStream.open(outputFile);
     if (!inputStream.is_open()) {
@@ -150,6 +151,60 @@ void TextController::print() {
         line = line->next;
     }
     std::cout << tail->data;
+}
+
+void TextController::reload() {
+    inputStream.open(this->filepath);
+
+    saved = true;
+    Buffer* line = new Buffer;
+    at = head;
+    line = head;
+    head->data[0] = '\0';
+    head->prev = nullptr;
+    head->next = nullptr;
+
+    charCount = 0;
+    lineCount = 1;
+    atLine = 1;
+    int k = 0;
+    char c;
+    // 读取文件
+    while ((c = inputStream.get()) != EOF) {
+        if (c == '\r' || c == '\n') {
+            if (c == '\r') {
+                char nextChar = inputStream.get();
+                if (nextChar == '\n') {
+                    // Windows行尾
+                    c = '\n';
+                }
+                else {
+                    // 非Windows行尾，回退字符
+                    inputStream.unget();
+                }
+            }
+            line->data[k] = '\0';
+            // 下一行
+            lineCount++;
+            k = 0;
+            Buffer* newLine = new Buffer;
+            line->next = newLine;
+            newLine->prev = line;
+            newLine->next = nullptr;
+            line = newLine;
+            continue;
+        }
+        charCount++;
+        line->data[k++] = c;
+    }
+    line->data[k] = '\0';
+
+    // 保存行尾
+    line->prev->next = tail;
+    strcpy(tail->data, line->data);
+    tail->next = nullptr;
+    tail->prev = line->prev;
+    delete line;
 }
 
 void TextController::save() {
