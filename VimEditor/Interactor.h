@@ -1,4 +1,5 @@
 #pragma once
+
 #include "TextController.h"
 #include "Help.h"
 
@@ -22,9 +23,11 @@ private:
 		"wq",
 		"q"
 	};
+	TextController* controller;
 
 public:
 	Interactor();
+	Interactor(const char inputFile[], const char outputFile[] = nullptr);
 	~Interactor();
 };
 
