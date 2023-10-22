@@ -58,11 +58,16 @@ TextController::TextController(const char inputFile[], const char outputFile[]) 
     line->data[k] = '\0';
 
     // 保存行尾
-    tail = new Buffer();
-    line->prev->next = tail;
-    strcpy(tail->data, line->data);
-    tail->next = nullptr;
-    tail->prev = line->prev;
+    if(line->prev != nullptr) {
+        tail = new Buffer();
+        line->prev->next = tail;
+        strcpy(tail->data, line->data);
+        tail->next = nullptr;
+        tail->prev = line->prev;
+    }
+    else {
+        tail = head;
+    }
     delete line;
 }
 
@@ -87,8 +92,21 @@ char* TextController::getLine() {
 }
 
 void TextController::insert(int line, const char data[]) {
-    if (line > lineCount) {
+    if (line > lineCount + 1) {
         std::cout << "行号不规范!" << std::endl;
+        return;
+    }
+    else if (line == lineCount + 1) {
+        // 最后一行添加新行
+        Buffer* newLine = new Buffer;
+        strcpy(newLine->data, data);
+        this->lineCount++;
+        this->charCount += strlen(data);
+        this->saved = false;
+        tail->next = newLine;
+        newLine->prev = tail;
+        tail = newLine;            
+        newLine->next = nullptr;
         return;
     }
 
@@ -96,13 +114,23 @@ void TextController::insert(int line, const char data[]) {
     Buffer* temp = head;
     while (temp != nullptr) {
         if (line == depth) {
+            if (depth <= this->atLine) {
+                this->atLine++;
+            }
+
             // 插入行
             Buffer* newLine = new Buffer;
-            newLine->prev = temp;
-            newLine->next = temp->next;
+            newLine->next = temp;
+            if (temp->prev != nullptr) {
+                temp->prev->next = newLine;
+                temp->prev = newLine;
+            }
+            else {
+                // 插入第一行
+                this->head = newLine;
+                newLine->prev = nullptr;
+            }
             strcpy(newLine->data, data);
-            temp->next->prev = newLine;
-            temp->next = newLine;
             this->charCount += strlen(data);
             this->lineCount++;
             this->saved = false;
@@ -150,29 +178,33 @@ void TextController::replaceLine(const char* data) {
         at->data[i] = data[i];
     }
     at->data[i + 1] = '\0';
+    this->saved = false;
 }
 
 void TextController::replaceStr(const char* data, const char* str, bool a) {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    this->saved = false;
     if (a) {
         // 在当前行查找
-        if (int k = findSubstr(at->data, str) != -1) {
+        int k;
+        if ((k = findSubstr(at->data, str)) != -1) {
             char temp[1024];
             int i;
             int j = 0;
             // 匹配到子串，输出原内容
             std::cout << atLine << ": ";
             for (int i = 0; i < strlen(at->data); i++) {
-                if (i >= k && i <= k + strlen(str)) {
+                if (i >= k && i <= k + strlen(str) - 1) {
                     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
                     std::cout << at->data[i];
-                    SetConsoleTextAttribute(hConsole, FOREGROUND_INTENSITY);
+                    SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+                    continue;
                 }
                 std::cout << at->data[i];
             }
 
             // 将该行中子串后的内容保存
-            for (i = k + strlen(str) + 1; i < strlen(at->data); i++) {
+            for (i = k + strlen(str); i < strlen(at->data); i++) {
                 temp[j++] = at->data[i];
             }
             temp[j] = '\0';
@@ -190,8 +222,8 @@ void TextController::replaceStr(const char* data, const char* str, bool a) {
                 at->data[i] = *(data + j);
                 j++;
             }
-            SetConsoleTextAttribute(hConsole, FOREGROUND_INTENSITY);          
-            at->data[i + 1] = '\0';
+            SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            at->data[i] = '\0';
             for (i = 0; i < strlen(temp); i++) {
                 std::cout << temp[i];
             }
@@ -207,8 +239,9 @@ void TextController::replaceStr(const char* data, const char* str, bool a) {
         int depth = 1;
         Buffer* temp = head;
         bool flag = false;        
+        int k;
         while (temp != nullptr) {
-            if (int k = findSubstr(temp->data, str) != -1) {
+            if ((k = findSubstr(temp->data, str)) != -1) {
                 char templ[1024];
                 int j = 0;
                 flag = true;
@@ -216,17 +249,18 @@ void TextController::replaceStr(const char* data, const char* str, bool a) {
                 // 匹配到子串，先输出原内容
                 std::cout << depth << ": ";
                 for (i = 0; i < strlen(temp->data); i++) {
-                    if (i >= k && i <= k + strlen(str)) {
+                    if (i >= k && i <= k + strlen(str) - 1) {
                         SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
                         std::cout << temp->data[i];
-                        SetConsoleTextAttribute(hConsole, FOREGROUND_INTENSITY);
+                        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+                        continue;
                     }
                     std::cout << temp->data[i];
                 }
                 std::cout << "   --->>" << std::endl;
 
                 // 将该行中子串后的内容保存
-                for (i = k + strlen(str) + 1; i < strlen(at->data); i++) {
+                for (i = k + strlen(str); i < strlen(at->data); i++) {
                     templ[j++] = at->data[i];
                 }
                 templ[j] = '\0';
@@ -244,15 +278,15 @@ void TextController::replaceStr(const char* data, const char* str, bool a) {
                     temp->data[i] = *(data + j);
                     j++;
                 }
-                SetConsoleTextAttribute(hConsole, FOREGROUND_INTENSITY);
-                temp->data[i + 1] = '\0';
+                SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+                temp->data[j] = '\0';
                 for (i = 0; i < strlen(templ); i++) {
                     std::cout << templ[i];
                 }
                 strcat(temp->data, templ);
                 std::cout << std::endl;
             }
-
+            depth++;
             temp = temp->next;
         }
         if (!flag) {
@@ -289,24 +323,28 @@ void TextController::find(const char* str, bool regex) {
                 std::cout << depth << ": ";
                 SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
                 std::cout << temp->data << std::endl;
-                SetConsoleTextAttribute(hConsole, FOREGROUND_INTENSITY);
+                SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
             }
         }
         else {
             // 不使用正则表达式
-            if (int k = findSubstr(temp->data, str) != -1) {
+            int k = findSubstr(temp->data, str);
+            if (k != -1) {
                 flag = true;
                 std::cout << depth << ": ";
                 for (int i = 0; i < strlen(temp->data); i++) {
-                    if (i >= k && i <= k + strlen(str)) {
+                    if (i >= k && i <= k + strlen(str) - 1) {
                         SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-                        std::cout << temp->data[i];
-                        SetConsoleTextAttribute(hConsole, FOREGROUND_INTENSITY);
-                    }
+                        std::cout << temp->data[i];            
+                        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+                        continue;
+                    }                 
                     std::cout << temp->data[i];
                 }
+                std::cout << std::endl;
             }
         }
+        depth++;
         temp = temp->next;
     }
     if (!flag) {
@@ -397,6 +435,7 @@ void TextController::print() {
 }
 
 void TextController::reload() {
+    inputStream.close();
     inputStream.open(this->filepath);
 
     saved = true;
@@ -443,11 +482,19 @@ void TextController::reload() {
     line->data[k] = '\0';
 
     // 保存行尾
-    line->prev->next = tail;
-    strcpy(tail->data, line->data);
-    tail->next = nullptr;
-    tail->prev = line->prev;
+    if (line->prev != nullptr) {
+        tail = new Buffer();
+        line->prev->next = tail;
+        strcpy(tail->data, line->data);
+        tail->next = nullptr;
+        tail->prev = line->prev;
+    }
+    else {
+        tail = head;
+    }
     delete line;
+
+    std::cout << "文件已重新读取!" << std::endl;
 }
 
 void TextController::goPrev() {
@@ -485,10 +532,11 @@ void TextController::save() {
     // 将Buffer中的内容输出到output文件
     outputStream.open(this->outputpath, std::ios::out);
     Buffer* p = head;
-    for (int i = 0; i < this->lineCount; i++) {
-        outputStream << p->data << "\r\n";
+    for (int i = 0; i < this->lineCount - 1; i++) {
+        outputStream << p->data << "\r";
         p = p->next;
     }
+    outputStream << p->data;
     outputStream.flush();
     this->saved = true;
 }

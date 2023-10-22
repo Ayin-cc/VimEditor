@@ -118,21 +118,21 @@ void Interactor::paramCommand(const char* command) {
     }
     else if (strncmp(command, "insert", 6) == 0) {
         // insert命令
-        if (strlen(command) < 7 || command[7] != ' ') {
+        if (strlen(command) < 6 || command[6] != ' ') {
             std::cout << "命令格式错误!" << std::endl;
             std::cout << insertHelp << std::endl;
             return;
         }
 
         int line;
-        char* data = nullptr;
+        char data[1024];
         if (sscanf(command, "insert %d \"%[^\"]\"", &line, data) == 2) {
             // 命令符合规范
             this->insert(line, data);
         }
         else {
             std::cout << "命令格式错误!" << std::endl;
-            std::cout << jumpHelp << std::endl;
+            std::cout << insertHelp << std::endl;
             return;
         }
     }
@@ -154,17 +154,17 @@ void Interactor::paramCommand(const char* command) {
             this->del();
         }
     }
-    else if (strncmp(command, "r", 1) == 0) {
+    else if (!(strcmp(command, "reload") == 0) && (strncmp(command, "r", 1) == 0)) {
         // replace命令
         if (strlen(command) < 2 || command[1] != ' ') {
             std::cout << "命令格式错误!" << std::endl;
-            std::cout << jumpHelp << std::endl;
+            std::cout << replaceHelp << std::endl;
             return;
         }
 
-        // 判断是带参数-s
-        char* str = nullptr;
-        char* data = nullptr;
+        // 判断是带参数-s -a
+        char str[1024];
+        char data[1024];
         if (sscanf(command, "r -s -a \"%[^\"]\" \"%[^\"]\"", str, data) == 2) {
             this->strReplace(str, data, true);
         }
@@ -184,11 +184,11 @@ void Interactor::paramCommand(const char* command) {
         // find命令
         if (strlen(command) < 2 || command[1] != ' ') {
             std::cout << "命令格式错误!" << std::endl;
-            std::cout << jumpHelp << std::endl;
+            std::cout << findHelp << std::endl;
             return;
         }
 
-        char* str = nullptr;
+        char str[1024];
         if (sscanf(command, "f -re \"%[^\"]\"", str) == 1) {
             this->find(str, true);
         }
@@ -268,6 +268,7 @@ void Interactor::startup() {
     std::cout << std::endl;
 
     while (true) {
+        std::cout << "~" << std::endl;
         std::cout << controller->getLineNum() << ": " << controller->getLine() << std::endl;
         std::cout << "# ";
         char input[1024];
@@ -340,18 +341,18 @@ void Interactor::info() {
 
 void Interactor::reload() {
     char c;
-    bool flag = true;
     if (!controller->isSaved()) {
         std::cout << "文件未保存，是否继续(Y/N): ";
         std::cin >> c;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         if (c == 'Y') {
-            flag = true;
+            controller->reload();
         }
         else {
-            flag = false;
+            return;
         }
     }
-    if (flag) {
+    else {
         controller->reload();
     }
 }
@@ -368,19 +369,16 @@ void Interactor::saveQuit() {
 
 void Interactor::quit() {
     char c;
-    bool flag = true;
     if (!controller->isSaved()) {
         std::cout << "文件未保存，是否继续(Y/N): ";
         std::cin >> c;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         if (c == 'Y') {
-            flag = true;
+            controller->quit();
+            exit(1);
         }
         else {
-            flag = false;
+            return;
         }
-    }
-    if (flag) {
-        controller->quit();
-        exit(1);
     }
 }
