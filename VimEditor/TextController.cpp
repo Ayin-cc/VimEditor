@@ -204,7 +204,7 @@ void TextController::replaceStr(const char* data, const char* str, bool a) {
             }
 
             // 将该行中子串后的内容保存
-            for (i = k + strlen(str); i < strlen(at->data); i++) {
+            for (i = k + strlen(str) - 1; i < strlen(at->data); i++) {
                 temp[j++] = at->data[i];
             }
             temp[j] = '\0';
@@ -260,7 +260,7 @@ void TextController::replaceStr(const char* data, const char* str, bool a) {
                 std::cout << "   --->>" << std::endl;
 
                 // 将该行中子串后的内容保存
-                for (i = k + strlen(str); i < strlen(at->data); i++) {
+                for (i = k + strlen(str) - 1; i < strlen(at->data); i++) {
                     templ[j++] = at->data[i];
                 }
                 templ[j] = '\0';
@@ -279,7 +279,7 @@ void TextController::replaceStr(const char* data, const char* str, bool a) {
                     j++;
                 }
                 SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-                temp->data[j] = '\0';
+                temp->data[i] = '\0';
                 for (i = 0; i < strlen(templ); i++) {
                     std::cout << templ[i];
                 }
